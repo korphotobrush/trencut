@@ -6,3 +6,4 @@ node_modules
 *.log
 .open-next
 tsconfig.tsbuildinfo
+.DS_Store

@@ -5,11 +5,13 @@ import { generateDetailPageText, saveProjectResult } from "@/lib/client-generate
 import { useSession, signIn, signOut } from "@/lib/auth-client";
 import ApiKeysModal from "./ApiKeysModal";
 import KeywordSearchCard from "./KeywordSearchCard";
+import ImageUploadBox from "./ImageUploadBox";
 
 export default function Home() {
   const { data: session } = useSession(); // 로그인 상태 (없으면 null)
   const [guideOpen, setGuideOpen] = useState(false);
   const [keysOpen, setKeysOpen] = useState(false);
+  const [uploadedImageKey, setUploadedImageKey] = useState<string | null>(null);
   const [mode, setMode] = useState<"auto" | "advanced">("auto");
   const [format, setFormat] = useState<"card" | "text" | "both">("card");
   const [advancedText, setAdvancedText] = useState("");
@@ -82,12 +84,7 @@ export default function Home() {
             <p style={cardTitleStyle}>이미지 업로드 & 프롬프트</p>
             <p style={cardDescStyle}>본인이 확보한 이미지만 업로드해 주세요.</p>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-              <div style={uploadBoxStyle}>
-                <strong style={{ display: "block", color: "var(--green-700)", marginBottom: 4 }}>
-                  + 이미지 올리기
-                </strong>
-                드래그하거나 클릭해서 업로드
-              </div>
+              <ImageUploadBox onUploaded={setUploadedImageKey} />
               <div>
                 <div style={modeToggleStyle}>
                   <div onClick={() => setMode("auto")} style={modeOptStyle(mode === "auto")}>
@@ -402,21 +399,6 @@ const cardDescStyle: React.CSSProperties = {
   fontSize: 13,
   color: "var(--ink-soft)",
   margin: "0 0 16px",
-};
-const uploadBoxStyle: React.CSSProperties = {
-  border: "1.5px dashed var(--green-300)",
-  borderRadius: 3,
-  padding: "30px 16px",
-  minHeight: 140,
-  display: "flex",
-  flexDirection: "column",
-  alignItems: "center",
-  justifyContent: "center",
-  textAlign: "center",
-  color: "var(--ink-soft)",
-  fontSize: 13,
-  background: "var(--cream)",
-  cursor: "pointer",
 };
 const modeToggleStyle: React.CSSProperties = {
   display: "flex",

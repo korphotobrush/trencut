@@ -7,6 +7,11 @@ compatibility_flags = ["nodejs_compat"]
 directory = ".open-next/assets"
 binding = "ASSETS"
 
+# OpenAI 같은 외부 API를 호출할 때 Cloudflare가 더 적절한 위치에서 실행하도록 함
+# (드물게 OpenAI가 차단한 지역의 엣지 서버를 거쳐서 나는 에러를 줄이는 데 도움)
+[placement]
+mode = "smart"
+
 [[d1_databases]]
 binding = "DB"
 database_name = "trancut-db"

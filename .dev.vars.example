@@ -1,0 +1,13 @@
+# 로컬 개발용 환경변수 (.dev.vars 파일에 실제 값 넣기, git 커밋 금지)
+# 프로덕션 배포 시에는 아래 명령으로 등록:
+#   wrangler secret put ENCRYPTION_KEY
+#   wrangler secret put BETTER_AUTH_SECRET
+#   wrangler secret put BETTER_AUTH_URL
+#   wrangler secret put GOOGLE_CLIENT_ID
+#   wrangler secret put GOOGLE_CLIENT_SECRET
+
+ENCRYPTION_KEY=
+BETTER_AUTH_SECRET=
+BETTER_AUTH_URL=https://trancut.여러분계정.workers.dev
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=

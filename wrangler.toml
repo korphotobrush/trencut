@@ -1,0 +1,21 @@
+name = "trancut"
+main = ".open-next/worker.js"
+compatibility_date = "2026-01-01"
+compatibility_flags = ["nodejs_compat"]
+
+[assets]
+directory = ".open-next/assets"
+binding = "ASSETS"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "trancut-db"
+database_id = "b8d95d0b-1e88-4f61-a6bb-16c59c3279c4"
+
+[[r2_buckets]]
+binding = "MEDIA"
+bucket_name = "trancut-media"
+
+[[kv_namespaces]]
+binding = "CACHE_KV"
+id = "986ab864f6654b2bb4f636832438f6c8"

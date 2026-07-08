@@ -1,0 +1,13 @@
+:root{
+  --green-900:#0d2a1f; --green-700:#1e5c44; --green-500:#00754a;
+  --green-300:#6fae8c; --green-100:#d7ead9;
+  --cream:#f4efe2; --cream-2:#ece4d2;
+  --ink:#1b2b22; --ink-soft:#5b6a60; --cta:#e2685a; --white:#fffdf9; --r:3px;
+}
+*{box-sizing:border-box;}
+body{
+  margin:0;
+  font-family:'Pretendard','Apple SD Gothic Neo','Segoe UI',sans-serif;
+  background:var(--cream);
+  color:var(--ink);
+}

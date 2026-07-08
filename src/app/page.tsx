@@ -260,11 +260,22 @@ export default function Home() {
                 </a>
               </div>
               <div style={guideItemStyle}>
-                <p style={guideItemTitleStyle}>네이버 오픈API (개인용)</p>
-                <p style={guideItemDescStyle}>
-                  네이버 아이디로 로그인 후 애플리케이션을 등록하면 Client ID/Secret이
-                  바로 발급됩니다. 키워드 검색(오픈API 소스)에 사용돼요.
-                </p>
+                <p style={guideItemTitleStyle}>네이버 오픈API (개인용) — 검색량 추이/요일·성별·연령대 분포</p>
+                <ol style={guideStepsStyle}>
+                  <li>위 링크에서 네이버 아이디로 로그인 후 애플리케이션 등록 화면으로 이동</li>
+                  <li>애플리케이션 이름은 아무거나 입력 (예: 트랜컷)</li>
+                  <li>
+                    <strong>"사용 API" 목록에서 아래 3개를 전부 체크</strong> — 하나라도 빠지면
+                    해당 기능만 "인증에 실패했습니다(errorCode 024)" 에러가 나요:
+                    <ul style={guideSubListStyle}>
+                      <li>데이터랩(검색어트렌드) — 검색량 추이·요일·성별·연령대 분포용</li>
+                      <li>검색 → 블로그 — 블로그 총 발행량용</li>
+                      <li>검색 → 카페글 — 카페 총 발행량용</li>
+                    </ul>
+                  </li>
+                  <li>비로그인 오픈 API 서비스 환경은 "WEB 설정"에 아무 웹 주소나 등록 (예: 이 사이트 주소)</li>
+                  <li>등록 완료하면 Client ID / Client Secret 바로 발급됨</li>
+                </ol>
                 <a
                   href="https://developers.naver.com/apps/#/register"
                   target="_blank"
@@ -275,11 +286,13 @@ export default function Home() {
                 </a>
               </div>
               <div style={guideItemStyle}>
-                <p style={guideItemTitleStyle}>네이버 검색광고 API (사업자용)</p>
-                <p style={guideItemDescStyle}>
-                  네이버 검색광고 계정으로 로그인 후 "도구 → API 사용 관리"에서
-                  신청하면 CUSTOMER_ID/액세스라이선스/비밀키가 발급됩니다.
-                </p>
+                <p style={guideItemTitleStyle}>네이버 검색광고 API (사업자용) — 연관키워드·검색량 표</p>
+                <ol style={guideStepsStyle}>
+                  <li>위 링크에서 네이버 검색광고 계정(사업자 등록 필요)으로 로그인</li>
+                  <li>우측 상단 "도구" 메뉴 → "API 사용 관리" 클릭</li>
+                  <li>"네이버 검색광고 API 서비스 신청" 버튼 클릭 (별도 심사 없이 바로 발급)</li>
+                  <li>발급된 CUSTOMER_ID / 액세스라이선스 / 비밀키 3개를 그대로 복사</li>
+                </ol>
                 <a
                   href="https://searchad.naver.com/my-screen"
                   target="_blank"
@@ -292,7 +305,12 @@ export default function Home() {
             </div>
             <p style={{ fontSize: 12, color: "var(--ink-soft)", marginTop: 18 }}>
               발급받은 키는 상단 "API 키 설정"에서 등록하면 됩니다. 키는 암호화되어
-              저장되고, 본인 요청에만 사용됩니다.
+              저장되고, 본인 요청에만 사용됩니다. 오픈API/검색광고API 둘 다 등록해두면
+              키워드 검색 결과에 표+그래프+분포가 한 번에 다 나와요.
+            </p>
+            <p style={{ fontSize: 11, color: "var(--ink-soft)", marginTop: 8 }}>
+              참고: "검색어 이슈성 등급"이나 정확한 CPC 단가(원) 같은 일부 상용 키워드 툴의
+              지표는 네이버가 공식 API로 제공하지 않아서 이 앱에서도 만들 수 없어요.
             </p>
           </div>
         </div>
@@ -499,6 +517,18 @@ const guideLinkStyle: React.CSSProperties = {
   fontWeight: 600,
   color: "var(--green-700)",
   textDecoration: "none",
+};
+const guideStepsStyle: React.CSSProperties = {
+  fontSize: 12,
+  color: "var(--ink-soft)",
+  lineHeight: 1.7,
+  margin: "0 0 8px",
+  paddingLeft: 18,
+};
+const guideSubListStyle: React.CSSProperties = {
+  margin: "4px 0",
+  paddingLeft: 18,
+  color: "var(--ink)",
 };
 const modalOverlayStyle: React.CSSProperties = {
   position: "fixed",

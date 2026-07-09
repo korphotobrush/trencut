@@ -2,89 +2,161 @@
 
 import { useRef, useState } from "react";
 
-// 클릭하거나 이미지를 끌어다 놓으면 업로드되는 박스.
-// 미리보기는 서버 응답을 기다리지 않고 브라우저가 들고 있는 파일 그대로 바로 보여주고
-// (URL.createObjectURL), 그 사이에 실제 파일은 /api/upload로 올려서 R2에 저장한다.
-// 업로드가 끝나면 결과로 받은 r2Key를 onUploaded로 부모(page.tsx)에 알려준다.
-export default function ImageUploadBox({ onUploaded }: { onUploaded?: (r2Key: string) => void }) {
+export type UploadedImage = {
+  r2Key: string;
+  base64: string;
+  mimeType: string;
+};
+
+const MAX_IMAGES = 5;
+
+// 상품 사진을 최대 5장까지 업로드하는 박스. 5장을 다 채우지 않아도 있는 만큼만으로
+// 프롬프트 추천을 받을 수 있다. 각 사진은 올리자마자 /api/upload로 R2에 저장하고,
+// base64도 함께 들고 있다가 /api/generate(프롬프트 추천) 호출 시 그대로 실어 보낸다.
+export default function ImageUploadBox({
+  onChange,
+}: {
+  onChange?: (images: UploadedImage[]) => void;
+}) {
   const inputRef = useRef<HTMLInputElement>(null);
-  const [preview, setPreview] = useState<string | null>(null);
-  const [uploading, setUploading] = useState(false);
+  const [images, setImages] = useState<UploadedImage[]>([]);
+  const [uploadingCount, setUploadingCount] = useState(0);
   const [error, setError] = useState("");
 
-  async function handleFile(file: File) {
-    setPreview(URL.createObjectURL(file));
+  function update(updater: (prev: UploadedImage[]) => UploadedImage[]) {
+    setImages((prev) => {
+      const next = updater(prev);
+      onChange?.(next);
+      return next;
+    });
+  }
+
+  function readAsBase64(file: File): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve((reader.result as string).split(",")[1] ?? "");
+      reader.onerror = () => reject(new Error("이미지를 읽지 못했습니다."));
+      reader.readAsDataURL(file);
+    });
+  }
+
+  async function handleFiles(files: FileList | File[]) {
+    const list = Array.from(files).slice(0, MAX_IMAGES - images.length);
+    if (list.length === 0) return;
     setError("");
-    setUploading(true);
-    try {
-      const form = new FormData();
-      form.append("file", file);
-      const res = await fetch("/api/upload", { method: "POST", body: form });
-      const data = (await res.json()) as { r2Key?: string; error?: string };
-      if (!res.ok) throw new Error(data.error ?? "업로드에 실패했습니다.");
-      onUploaded?.(data.r2Key!);
-    } catch (e: any) {
-      setError(e.message ?? "업로드 중 오류가 발생했습니다.");
-    } finally {
-      setUploading(false);
+    setUploadingCount((n) => n + list.length);
+
+    for (const file of list) {
+      try {
+        const [base64, uploadRes] = await Promise.all([
+          readAsBase64(file),
+          (async () => {
+            const form = new FormData();
+            form.append("file", file);
+            return fetch("/api/upload", { method: "POST", body: form });
+          })(),
+        ]);
+        const uploadData = (await uploadRes.json()) as { r2Key?: string; error?: string };
+        if (!uploadRes.ok) throw new Error(uploadData.error ?? "업로드에 실패했습니다.");
+        update((prev) => [...prev, { r2Key: uploadData.r2Key!, base64, mimeType: file.type }]);
+      } catch (e: any) {
+        setError(e.message ?? "업로드 중 오류가 발생했습니다.");
+      } finally {
+        setUploadingCount((n) => n - 1);
+      }
     }
   }
 
+  function handleRemove(r2Key: string) {
+    update((prev) => prev.filter((img) => img.r2Key !== r2Key));
+  }
+
   return (
-    <div
-      style={uploadBoxStyle}
-      onClick={() => inputRef.current?.click()}
-      onDragOver={(e) => e.preventDefault()}
-      onDrop={(e) => {
-        e.preventDefault();
-        const file = e.dataTransfer.files?.[0];
-        if (file) handleFile(file);
-      }}
-    >
-      <input
-        ref={inputRef}
-        type="file"
-        accept="image/*"
-        style={{ display: "none" }}
-        onChange={(e) => {
-          const file = e.target.files?.[0];
-          if (file) handleFile(file);
-        }}
-      />
-      {preview ? (
-        <img
-          src={preview}
-          alt="업로드 미리보기"
-          style={{ maxWidth: "100%", maxHeight: 130, borderRadius: 3, objectFit: "contain" }}
-        />
-      ) : (
-        <>
-          <strong style={{ display: "block", color: "var(--green-700)", marginBottom: 4 }}>
-            + 이미지 올리기
-          </strong>
-          드래그하거나 클릭해서 업로드
-        </>
-      )}
-      {uploading && (
-        <p style={{ fontSize: 11, color: "var(--ink-soft)", marginTop: 6 }}>업로드 중...</p>
-      )}
+    <div>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+        {images.map((img) => (
+          <div key={img.r2Key} style={thumbWrapStyle}>
+            <img src={`data:${img.mimeType};base64,${img.base64}`} alt="상품 이미지" style={thumbImgStyle} />
+            <button onClick={() => handleRemove(img.r2Key)} style={removeBtnStyle} title="삭제">
+              ×
+            </button>
+          </div>
+        ))}
+        {images.length < MAX_IMAGES && (
+          <div
+            style={addTileStyle}
+            onClick={() => inputRef.current?.click()}
+            onDragOver={(e) => e.preventDefault()}
+            onDrop={(e) => {
+              e.preventDefault();
+              if (e.dataTransfer.files?.length) handleFiles(e.dataTransfer.files);
+            }}
+          >
+            <input
+              ref={inputRef}
+              type="file"
+              accept="image/*"
+              multiple
+              style={{ display: "none" }}
+              onChange={(e) => {
+                if (e.target.files?.length) handleFiles(e.target.files);
+                e.target.value = "";
+              }}
+            />
+            <strong style={{ color: "var(--green-700)" }}>+ 이미지 추가</strong>
+            <span style={{ fontSize: 11, marginTop: 4 }}>
+              {uploadingCount > 0 ? "업로드 중..." : `${images.length}/${MAX_IMAGES}장`}
+            </span>
+          </div>
+        )}
+      </div>
       {error && <p style={{ fontSize: 11, color: "var(--cta)", marginTop: 6 }}>{error}</p>}
     </div>
   );
 }
 
-const uploadBoxStyle: React.CSSProperties = {
+const thumbWrapStyle: React.CSSProperties = {
+  position: "relative",
+  width: 96,
+  height: 96,
+  borderRadius: 3,
+  overflow: "hidden",
+  border: "1px solid var(--cream-2)",
+  background: "var(--cream)",
+};
+const thumbImgStyle: React.CSSProperties = {
+  width: "100%",
+  height: "100%",
+  objectFit: "cover",
+  display: "block",
+};
+const removeBtnStyle: React.CSSProperties = {
+  position: "absolute",
+  top: 2,
+  right: 2,
+  width: 20,
+  height: 20,
+  lineHeight: "18px",
+  padding: 0,
+  border: "none",
+  borderRadius: "50%",
+  background: "rgba(13,42,31,0.7)",
+  color: "#fff",
+  fontSize: 13,
+  cursor: "pointer",
+};
+const addTileStyle: React.CSSProperties = {
+  width: 96,
+  height: 96,
   border: "1.5px dashed var(--green-300)",
   borderRadius: 3,
-  padding: "30px 16px",
-  minHeight: 140,
   display: "flex",
   flexDirection: "column",
   alignItems: "center",
   justifyContent: "center",
   textAlign: "center",
   color: "var(--ink-soft)",
-  fontSize: 13,
+  fontSize: 11,
   background: "var(--cream)",
   cursor: "pointer",
 };

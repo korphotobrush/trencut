@@ -11,3 +11,4 @@ body{
   background:var(--cream);
   color:var(--ink);
 }
+@keyframes spin{to{transform:rotate(360deg);}}

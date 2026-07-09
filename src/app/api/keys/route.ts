@@ -17,7 +17,7 @@ export async function POST(req: NextRequest) {
   const session = await getSession(req);
   if (!session) return NextResponse.json({ error: "로그인이 필요합니다." }, { status: 401 });
   const { provider, value } = (await req.json()) as { provider: string; value?: string };
-  if (!["naver_open", "naver_searchad", "openai"].includes(provider) || !value)
+  if (!["naver_open", "naver_searchad", "openai", "gemini"].includes(provider) || !value)
     return NextResponse.json({ error: "잘못된 요청입니다." }, { status: 400 });
   const encrypted = await encryptValue(value, getEnv().ENCRYPTION_KEY);
   const db = getDB();

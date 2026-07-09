@@ -174,24 +174,34 @@ export default function KeywordSearchCard() {
               {result.weekday && (
                 <div>
                   <SectionTitle>요일 분포</SectionTitle>
-                  <BarChart items={result.weekday.map((w) => ({ label: w.day, value: w.avgRatio }))} />
+                  <p style={chartCaptionStyle}>
+                    검색 관심도 지수 (0~100, 기간 내 가장 많이 검색된 날을 100으로 둔 상대값 — 검색량 비중 %가 아님)
+                  </p>
+                  <BarChart
+                    items={result.weekday.map((w) => ({ label: w.day, value: w.avgRatio }))}
+                    unit=" / 100"
+                    maxScale={100}
+                  />
                 </div>
               )}
               {result.gender && (
                 <div>
                   <SectionTitle>성별 분포</SectionTitle>
+                  <p style={chartCaptionStyle}>전체 검색 대비 비중</p>
                   <BarChart
                     items={[
                       { label: "남성", value: result.gender.male },
                       { label: "여성", value: result.gender.female },
                     ]}
                     unit="%"
+                    maxScale={100}
                   />
                 </div>
               )}
               {result.age && (
                 <div style={{ gridColumn: "1 / -1" }}>
                   <SectionTitle>연령대 분포</SectionTitle>
+                  <p style={chartCaptionStyle}>전체 검색 대비 비중</p>
                   <BarChart items={result.age.map((a) => ({ label: a.ageLabel, value: a.ratio }))} unit="%" />
                 </div>
               )}
@@ -213,6 +223,12 @@ export default function KeywordSearchCard() {
 function SectionTitle({ children }: { children: React.ReactNode }) {
   return <p style={{ fontSize: 13, fontWeight: 700, color: "var(--green-900)", margin: "0 0 8px" }}>{children}</p>;
 }
+
+const chartCaptionStyle: React.CSSProperties = {
+  fontSize: 11,
+  color: "var(--ink-soft)",
+  margin: "-4px 0 10px",
+};
 
 function StatBox({ label, value }: { label: string; value: string }) {
   return (
@@ -265,18 +281,44 @@ function TrendChart({ series }: { series: TrendSeries[] }) {
   );
 }
 
-function BarChart({ items, unit }: { items: { label: string; value: number }[]; unit?: string }) {
-  const max = Math.max(...items.map((i) => i.value), 1);
+// maxScale을 주면 그 값을 100%로 두고 막대 길이를 계산한다(예: 0~100 지수).
+// 생략하면 items 안에서 가장 큰 값을 기준으로 상대 비교한다(예: 비중 %).
+function BarChart({
+  items,
+  unit,
+  maxScale,
+}: {
+  items: { label: string; value: number }[];
+  unit?: string;
+  maxScale?: number;
+}) {
+  const max = maxScale ?? Math.max(...items.map((i) => i.value), 1);
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
       {items.map((item) => (
         <div key={item.label} style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <span style={{ width: 56, fontSize: 12, color: "var(--ink-soft)", flexShrink: 0 }}>{item.label}</span>
-          <div style={{ flex: 1, background: "var(--cream)", borderRadius: 2, height: 14 }}>
-            <div style={{ width: `${(item.value / max) * 100}%`, background: "var(--green-500)", height: "100%", borderRadius: 2 }} />
+          <div
+            style={{
+              flex: 1,
+              background: "var(--cream-2)",
+              border: "1px solid var(--cream-2)",
+              borderRadius: 2,
+              height: 16,
+            }}
+          >
+            <div
+              style={{
+                width: `${Math.min((item.value / max) * 100, 100)}%`,
+                background: "var(--green-500)",
+                height: "100%",
+                borderRadius: 2,
+              }}
+            />
           </div>
-          <span style={{ width: 48, fontSize: 12, color: "var(--ink-soft)", textAlign: "right", flexShrink: 0 }}>
-            {item.value}{unit ?? ""}
+          <span style={{ width: 56, fontSize: 12, color: "var(--ink)", textAlign: "right", flexShrink: 0 }}>
+            {item.value}
+            {unit ?? ""}
           </span>
         </div>
       ))}

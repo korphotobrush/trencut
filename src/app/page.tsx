@@ -1,44 +1,19 @@
 "use client";
 
 import { useState } from "react";
-import { generateDetailPageText, saveProjectResult } from "@/lib/client-generate";
 import { useSession, signIn, signOut } from "@/lib/auth-client";
 import ApiKeysModal from "./ApiKeysModal";
 import KeywordSearchCard from "./KeywordSearchCard";
-import ImageUploadBox from "./ImageUploadBox";
+import ImageUploadBox, { UploadedImage } from "./ImageUploadBox";
+import PromptSuggestCard from "./PromptSuggestCard";
+import KakaoAdFit from "./KakaoAdFit";
+import SidebarBanners from "./SidebarBanners";
 
 export default function Home() {
   const { data: session } = useSession(); // 로그인 상태 (없으면 null)
   const [guideOpen, setGuideOpen] = useState(false);
   const [keysOpen, setKeysOpen] = useState(false);
-  const [uploadedImageKey, setUploadedImageKey] = useState<string | null>(null);
-  const [mode, setMode] = useState<"auto" | "advanced">("auto");
-  const [format, setFormat] = useState<"card" | "text" | "both">("card");
-  const [advancedText, setAdvancedText] = useState("");
-  const [generating, setGenerating] = useState(false);
-  const [resultText, setResultText] = useState("");
-  const [genError, setGenError] = useState("");
-
-  async function handleGenerate() {
-    setGenerating(true);
-    setGenError("");
-    try {
-      // TODO: 실제로는 업로드된 이미지를 Vision으로 먼저 설명 텍스트화하는 단계가 필요.
-      // 지금은 데모용으로 고정 설명을 사용.
-      const text = await generateDetailPageText({
-        imageDescription: "여름용 린넨 원피스, 밝은 베이지 톤, 캐주얼한 데일리룩",
-        advancedPrompt: mode === "advanced" ? advancedText : undefined,
-        onChunk: setResultText,
-      });
-      setResultText(text);
-      // 프로젝트가 이미 생성되어 있다면 결과 저장 (여기서는 데모이므로 생략 가능)
-      // await saveProjectResult(projectId, text);
-    } catch (e: any) {
-      setGenError(e.message ?? "생성 중 오류가 발생했습니다.");
-    } finally {
-      setGenerating(false);
-    }
-  }
+  const [uploadedImages, setUploadedImages] = useState<UploadedImage[]>([]);
 
   return (
     <>
@@ -70,103 +45,43 @@ export default function Home() {
         </div>
       </div>
 
-      <div style={floatingAdLeftStyle}>FLOATING AD</div>
+      <div style={floatingAdLeftStyle}>
+        <KakaoAdFit adUnit="DAN-aLElIinBaSMcrQRx" width={160} height={600} />
+      </div>
 
       <div style={shellStyle}>
-        <div style={{ flex: 1, maxWidth: 720, minWidth: 0, paddingBottom: 60 }}>
+        <div style={{ flex: 1, maxWidth: 736, minWidth: 0, paddingBottom: 60 }}>
           <div style={{ height: 24 }} />
 
           {/* 키워드 검색 (src/app/KeywordSearchCard.tsx: 실제 네이버 API 호출 + 결과 표시까지 포함) */}
           <KeywordSearchCard />
 
-          {/* 업로드 + 프롬프트 */}
+          {/* 이미지 업로드 */}
           <div style={cardStyle}>
-            <p style={cardTitleStyle}>이미지 업로드 & 프롬프트</p>
-            <p style={cardDescStyle}>본인이 확보한 이미지만 업로드해 주세요.</p>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-              <ImageUploadBox onUploaded={setUploadedImageKey} />
-              <div>
-                <div style={modeToggleStyle}>
-                  <div onClick={() => setMode("auto")} style={modeOptStyle(mode === "auto")}>
-                    자동 모드
-                  </div>
-                  <div
-                    onClick={() => setMode("advanced")}
-                    style={modeOptStyle(mode === "advanced")}
-                  >
-                    어드밴스드
-                  </div>
-                </div>
-                <textarea
-                  style={textareaStyle}
-                  placeholder="예: 20대 여성 타겟 톤으로, 가격 강조 문구 빼줘"
-                  value={advancedText}
-                  onChange={(e) => setAdvancedText(e.target.value)}
-                  disabled={mode !== "advanced"}
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* 출력 포맷 */}
-          <div style={cardStyle}>
-            <p style={cardTitleStyle}>출력 포맷 선택</p>
-            <p style={cardDescStyle}>카드이미지, 텍스트블록, 또는 둘 다 받아보세요.</p>
-            <div style={{ display: "flex", gap: 8 }}>
-              <div onClick={() => setFormat("card")} style={fmtOptStyle(format === "card")}>
-                카드이미지
-              </div>
-              <div onClick={() => setFormat("text")} style={fmtOptStyle(format === "text")}>
-                텍스트블록
-              </div>
-              <div onClick={() => setFormat("both")} style={fmtOptStyle(format === "both")}>
-                둘 다
-              </div>
-            </div>
-          </div>
-
-          {/* 생성 + 결과 */}
-          <div style={cardStyle}>
-            <p style={cardTitleStyle}>생성하기</p>
+            <p style={cardTitleStyle}>이미지 업로드</p>
             <p style={cardDescStyle}>
-              등록된 OpenAI 키로 서버(/api/generate)가 스트리밍 프록시로 호출합니다.
+              본인이 확보한 상품 이미지만 업로드해 주세요. 최대 5장까지, 다 채우지 않아도 됩니다.
             </p>
-            <button
-              onClick={handleGenerate}
-              disabled={generating}
-              style={{ ...btnStyle, background: "var(--green-500)", color: "#fff" }}
-            >
-              {generating ? "생성 중..." : "상세페이지 생성"}
-            </button>
-            {genError && (
-              <p style={{ color: "var(--cta)", fontSize: 13, marginTop: 10 }}>{genError}</p>
-            )}
-            {resultText && (
-              <div
-                style={{
-                  marginTop: 14,
-                  background: "var(--cream)",
-                  border: "1px solid var(--cream-2)",
-                  borderRadius: 3,
-                  padding: 16,
-                  fontSize: 13,
-                  whiteSpace: "pre-wrap",
-                  lineHeight: 1.7,
-                }}
-              >
-                {resultText}
-              </div>
-            )}
+            <ImageUploadBox onChange={setUploadedImages} />
           </div>
+
+          {/* 프롬프트 추천 */}
+          <PromptSuggestCard images={uploadedImages} />
 
           {/* 하단 AdFit */}
           <p style={{ fontSize: 11, color: "var(--ink-soft)", margin: "6px 0 8px" }}>
             AdFit (우선 3개)
           </p>
-          <div style={{ display: "flex", gap: 12, marginBottom: 20 }}>
-            <div style={adfitSlotStyle}>AdFit #1</div>
-            <div style={adfitSlotStyle}>AdFit #2</div>
-            <div style={adfitSlotStyle}>AdFit #3</div>
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12, marginBottom: 20 }}>
+            <div style={adfitSlotStyle}>
+              <KakaoAdFit adUnit="DAN-iXRB31SLEUDw9fJg" width={728} height={90} />
+            </div>
+            <div style={adfitSlotStyle}>
+              <KakaoAdFit adUnit="DAN-axuXgRvotGuf11Vz" width={728} height={90} />
+            </div>
+            <div style={adfitSlotStyle}>
+              <KakaoAdFit adUnit="DAN-AcF3o33iAhb2UhgM" width={728} height={90} />
+            </div>
           </div>
 
           <div style={footerStyle}>
@@ -207,21 +122,17 @@ export default function Home() {
               </div>
             </div>
             <div style={footerBottomStyle}>
-              This is a sandbox prototype for internal testing.
-              <br />
-              Not a final production build. All trademarks belong to their respective owners.
+              트랜컷 v1.0.1 · All trademarks belong to their respective owners.
             </div>
           </div>
         </div>
 
-        {/* 우측 배너 (DB의 ad_banners, slot_group='sidebar') */}
+        {/* 우측 배너 — /admin에서 등록/활성화한 배너를 그대로 불러온다 (DB의 ad_banners, slot_group='sidebar') */}
         <div style={adColStyle}>
-          <p style={{ fontSize: 11, color: "var(--ink-soft)", marginBottom: 2 }}>
+          <p style={{ fontSize: 11, color: "transparent", marginBottom: 2 }}>
             개인 광고 배너
           </p>
-          {[1, 2, 3, 4, 5].map((n) => (
-            <div key={n} style={adSlotStyle} />
-          ))}
+          <SidebarBanners />
         </div>
       </div>
 
@@ -239,16 +150,32 @@ export default function Home() {
               </button>
             </div>
             <p style={{ fontSize: 13, color: "var(--ink-soft)", marginBottom: 16 }}>
-              키워드부터 상세페이지까지, 업로드만 하면 AI가 완성해요. 요즘 뜨는
-              키워드를 찾고 이미지를 올리면 한글화된 상세페이지로 재구성됩니다.
-              개인 API 키로 동작해요.
+              요즘 뜨는 키워드를 찾고, 상품 이미지를 올리면 AI가 이미지 생성 프롬프트를
+              추천해줘요. 필드를 다듬어서 복사한 뒤 ChatGPT 등 외부 도구로 가져가 최종
+              이미지를 만드세요. 개인 API 키로 동작해요.
             </p>
             <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
               <div style={guideItemStyle}>
-                <p style={guideItemTitleStyle}>OpenAI API 키</p>
+                <p style={guideItemTitleStyle}>Google Gemini API 키 (무료)</p>
                 <p style={guideItemDescStyle}>
-                  상세페이지 문구 생성에 사용됩니다. 결제 수단 등록 후 키를 만들 수 있어요.
-                  생성된 키는 그 자리에서만 보이니 바로 복사해두세요.
+                  이미지 생성 프롬프트 추천에 사용됩니다. 결제 수단 등록 없이 무료로 발급받을 수
+                  있어요 (일일/분당 요청 한도 있음). Gemini 키가 등록돼 있으면 OpenAI보다
+                  우선 사용됩니다.
+                </p>
+                <a
+                  href="https://aistudio.google.com/apikey"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={guideLinkStyle}
+                >
+                  Gemini API 키 무료로 발급받으러 가기 →
+                </a>
+              </div>
+              <div style={guideItemStyle}>
+                <p style={guideItemTitleStyle}>OpenAI API 키 (유료)</p>
+                <p style={guideItemDescStyle}>
+                  Gemini 키가 등록돼 있지 않을 때 대신 사용됩니다. 결제 수단 등록 후 키를
+                  만들 수 있어요. 생성된 키는 그 자리에서만 보이니 바로 복사해두세요.
                 </p>
                 <a
                   href="https://platform.openai.com/api-keys"
@@ -378,17 +305,9 @@ const floatingAdLeftStyle: React.CSSProperties = {
   left: 70,
   top: "50%",
   transform: "translateY(-50%)",
-  width: 90,
-  height: 480,
-  border: "1.5px dashed transparent",
+  width: 160,
+  height: 600,
   borderRadius: 3,
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  writingMode: "vertical-rl",
-  fontSize: 12,
-  color: "var(--ink-soft)",
-  background: "var(--cream)",
   zIndex: 40,
 };
 const shellStyle: React.CSSProperties = {
@@ -418,53 +337,11 @@ const cardDescStyle: React.CSSProperties = {
   color: "var(--ink-soft)",
   margin: "0 0 16px",
 };
-const modeToggleStyle: React.CSSProperties = {
-  display: "flex",
-  background: "var(--cream)",
-  borderRadius: 3,
-  padding: 4,
-  marginBottom: 14,
-  border: "1px solid var(--cream-2)",
-};
-const modeOptStyle = (active: boolean): React.CSSProperties => ({
-  flex: 1,
-  textAlign: "center",
-  padding: "9px 0",
-  borderRadius: 3,
-  fontSize: 13,
-  fontWeight: 600,
-  color: active ? "#fff" : "var(--ink-soft)",
-  background: active ? "var(--green-700)" : "transparent",
-  cursor: "pointer",
-});
-const textareaStyle: React.CSSProperties = {
-  width: "100%",
-  minHeight: 74,
-  border: "1.5px solid var(--cream-2)",
-  borderRadius: 3,
-  padding: "12px 14px",
-  fontSize: 13,
-  color: "var(--ink)",
-  resize: "vertical",
-  outline: "none",
-  background: "var(--white)",
-};
-const fmtOptStyle = (active: boolean): React.CSSProperties => ({
-  flex: 1,
-  border: `1.5px solid ${active ? "var(--green-500)" : "var(--cream-2)"}`,
-  borderRadius: 3,
-  padding: "14px 10px",
-  textAlign: "center",
-  cursor: "pointer",
-  background: active ? "var(--green-100)" : "var(--cream)",
-  fontSize: 13,
-  fontWeight: 600,
-  color: "var(--green-900)",
-});
 const adfitSlotStyle: React.CSSProperties = {
-  flex: 1,
+  width: 728,
+  maxWidth: "100%",
   height: 90,
-  border: "1.5px dashed transparent",
+  overflowX: "auto",
   borderRadius: 3,
   display: "flex",
   alignItems: "center",
@@ -481,18 +358,6 @@ const adColStyle: React.CSSProperties = {
   gap: 12,
   position: "sticky",
   top: 24,
-};
-const adSlotStyle: React.CSSProperties = {
-  height: 150,
-  border: "1.5px dashed transparent",
-  borderRadius: 3,
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  fontSize: 12,
-  color: "var(--ink-soft)",
-  background: "var(--cream)",
-  textAlign: "center",
 };
 const guideItemStyle: React.CSSProperties = {
   background: "var(--cream)",

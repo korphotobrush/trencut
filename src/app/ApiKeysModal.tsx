@@ -6,19 +6,21 @@ import { useEffect, useState } from "react";
 // 서버의 /api/keys(GET/POST/DELETE)를 호출해서 사용자 본인의 OpenAI/네이버 키를
 // 등록/조회/삭제한다. 실제 키 값은 서버에서 암호화되어 D1에 저장된다 (src/lib/crypto.ts).
 
-type ProviderId = "openai" | "naver_open" | "naver_searchad";
+type ProviderId = "openai" | "gemini" | "naver_open" | "naver_searchad";
 
 const PROVIDERS: { id: ProviderId; label: string }[] = [
+  { id: "gemini", label: "Google Gemini (무료)" },
   { id: "openai", label: "OpenAI" },
   { id: "naver_open", label: "네이버 오픈API" },
   { id: "naver_searchad", label: "네이버 검색광고API" },
 ];
 
-// provider마다 필요한 값 개수가 다르다: OpenAI는 키 1개, 네이버 오픈API는 Client ID/Secret 2개,
+// provider마다 필요한 값 개수가 다르다: OpenAI/Gemini는 키 1개, 네이버 오픈API는 Client ID/Secret 2개,
 // 검색광고API는 Customer ID/액세스라이선스/비밀키 3개. 여기서 입력받은 값들은
-// (OpenAI 제외) JSON 문자열로 합쳐져서 서버로 전송되고, 서버가 통째로 암호화해서 저장한다.
+// (OpenAI/Gemini 제외) JSON 문자열로 합쳐져서 서버로 전송되고, 서버가 통째로 암호화해서 저장한다.
 const PROVIDER_FIELDS: Record<ProviderId, { key: string; label: string; placeholder: string }[]> = {
   openai: [{ key: "value", label: "API 키", placeholder: "sk-..." }],
+  gemini: [{ key: "value", label: "API 키", placeholder: "AIza..." }],
   naver_open: [
     { key: "clientId", label: "Client ID", placeholder: "네이버 오픈API Client ID" },
     { key: "clientSecret", label: "Client Secret", placeholder: "네이버 오픈API Client Secret" },
@@ -35,7 +37,7 @@ type KeyRow = { id: string; provider: ProviderId; is_valid: number };
 export default function ApiKeysModal({ onClose }: { onClose: () => void }) {
   const [keys, setKeys] = useState<KeyRow[] | null>(null); // null = 아직 로딩 중
   const [needsLogin, setNeedsLogin] = useState(false);
-  const [provider, setProvider] = useState<ProviderId>("openai");
+  const [provider, setProvider] = useState<ProviderId>("gemini");
   const [fields, setFields] = useState<Record<string, string>>({}); // 입력 중인 필드값들
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -59,8 +61,8 @@ export default function ApiKeysModal({ onClose }: { onClose: () => void }) {
   async function handleSave() {
     const requiredFields = PROVIDER_FIELDS[provider];
     if (requiredFields.some((f) => !fields[f.key]?.trim())) return; // 빈 칸 있으면 저장 안 함
-    // OpenAI는 값이 하나라 그냥 문자열로, 나머지는 여러 값을 JSON으로 묶어서 보낸다.
-    const value = provider === "openai" ? fields.value : JSON.stringify(fields);
+    // OpenAI/Gemini는 값이 하나라 그냥 문자열로, 나머지는 여러 값을 JSON으로 묶어서 보낸다.
+    const value = provider === "openai" || provider === "gemini" ? fields.value : JSON.stringify(fields);
     setSaving(true);
     setError("");
     try {

@@ -16,8 +16,16 @@ interface D1Database {
 }
 
 interface R2Bucket {
-  put(key: string, value: ArrayBuffer | ReadableStream | string): Promise<void>;
-  get(key: string): Promise<{ arrayBuffer(): Promise<ArrayBuffer> } | null>;
+  put(
+    key: string,
+    value: ArrayBuffer | ReadableStream | string,
+    options?: { httpMetadata?: { contentType?: string } }
+  ): Promise<void>;
+  get(key: string): Promise<{
+    arrayBuffer(): Promise<ArrayBuffer>;
+    body: ReadableStream;
+    httpMetadata?: { contentType?: string };
+  } | null>;
   delete(key: string): Promise<void>;
 }
 

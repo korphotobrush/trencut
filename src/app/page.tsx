@@ -123,6 +123,10 @@ export default function Home() {
             </div>
             <div style={footerBottomStyle}>
               트랜컷 v1.0.1 · All trademarks belong to their respective owners.
+              <br />
+              <a href="/privacy" style={{ color: "#c7d6cc" }}>개인정보처리방침</a>
+              {" · "}
+              <a href="/terms" style={{ color: "#c7d6cc" }}>이용약관</a>
             </div>
           </div>
         </div>

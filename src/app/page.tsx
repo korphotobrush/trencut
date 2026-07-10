@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useSession, signIn, signOut } from "@/lib/auth-client";
 import ApiKeysModal from "./ApiKeysModal";
 import KeywordSearchCard from "./KeywordSearchCard";
@@ -14,6 +14,20 @@ export default function Home() {
   const [guideOpen, setGuideOpen] = useState(false);
   const [keysOpen, setKeysOpen] = useState(false);
   const [uploadedImages, setUploadedImages] = useState<UploadedImage[]>([]);
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  // 로그인한 계정이 관리자 화이트리스트(src/lib/admin.ts)에 있으면 네비게이션에
+  // "관리자 페이지" 버튼을 노출한다. /admin URL을 직접 입력하지 않아도 되게 하기 위함.
+  useEffect(() => {
+    if (!session) {
+      setIsAdmin(false);
+      return;
+    }
+    fetch("/api/admin/check")
+      .then((r) => r.json() as Promise<{ ok: boolean }>)
+      .then((data) => setIsAdmin(data.ok))
+      .catch(() => setIsAdmin(false));
+  }, [session]);
 
   return (
     <>
@@ -28,6 +42,11 @@ export default function Home() {
           <button onClick={() => setKeysOpen(true)} style={btnGhostStyle}>
             API 키 설정
           </button>
+          {isAdmin && (
+            <a href="/admin" style={{ ...btnGhostStyle, textDecoration: "none", display: "inline-block" }}>
+              관리자 페이지
+            </a>
+          )}
           {session ? (
             // 로그인된 상태: 이메일 표시 + 로그아웃 버튼
             <button onClick={() => signOut()} style={btnSolidStyle}>
